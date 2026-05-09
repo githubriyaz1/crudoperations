@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const API = "https://crudoperations-eh5h.onrender.com/";
+  const API = "https://crudoperations-eh5h.onrender.com";
 
   const [users, setUsers] = useState([]);
 
