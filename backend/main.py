@@ -1,9 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from bson import ObjectId
-from database import collection
+from pymongo import ReturnDocument
+from database import collection, counters_collection
 from schemas import User
-from bson import ObjectId
+import re
 
 app = FastAPI()
 
@@ -25,15 +26,68 @@ def serialize_user(user):
     }
 
 
+def get_login_count():
+    counter = counters_collection.find_one({"name": "logins"})
+    return counter["count"] if counter else 0
+
+
+def normalize_email(email: str):
+    return email.strip().lower()
+
+
+def email_filter(email: str):
+    return {
+        "email": {
+            "$regex": f"^{re.escape(normalize_email(email))}$",
+            "$options": "i"
+        }
+    }
+
+
 @app.get("/")
 def home():
     return {"message": "FastAPI CRUD Running"}
 
 
+@app.get("/dashboard/stats")
+def get_dashboard_stats():
+    return {
+        "signups": collection.count_documents({}),
+        "logins": get_login_count(),
+        "authenticationRequired": False
+    }
+
+
+@app.post("/login")
+def login():
+    result = counters_collection.find_one_and_update(
+        {"name": "logins"},
+        {"$inc": {"count": 1}},
+        upsert=True,
+        return_document=ReturnDocument.AFTER
+    )
+
+    return {
+        "message": "Login counted successfully",
+        "logins": result["count"],
+        "authenticationRequired": False
+    }
+
+
 @app.post("/users")
 def create_user(user: User):
+    normalized_email = normalize_email(user.email)
 
-    result = collection.insert_one(user.model_dump())
+    if collection.find_one(email_filter(normalized_email)):
+        raise HTTPException(
+            status_code=409,
+            detail="A user with this email already exists"
+        )
+
+    user_data = user.model_dump()
+    user_data["email"] = normalized_email
+
+    result = collection.insert_one(user_data)
 
     new_user = collection.find_one({"_id": result.inserted_id})
 
@@ -55,20 +109,32 @@ def get_users():
 def update_user(id: str, user: User):
 
     try:
+        user_id = ObjectId(id)
+        normalized_email = normalize_email(user.email)
+
+        duplicate_filter = email_filter(normalized_email)
+        duplicate_filter["_id"] = {"$ne": user_id}
+        duplicate_user = collection.find_one(duplicate_filter)
+
+        if duplicate_user:
+            raise HTTPException(
+                status_code=409,
+                detail="A user with this email already exists"
+            )
 
         collection.update_one(
-            {"_id": ObjectId(id)},
+            {"_id": user_id},
             {
                 "$set": {
                     "name": user.name,
-                    "email": user.email,
+                    "email": normalized_email,
                     "age": user.age
                 }
             }
         )
 
         updated_user = collection.find_one(
-            {"_id": ObjectId(id)}
+            {"_id": user_id}
         )
 
         if updated_user:
@@ -93,28 +159,7 @@ def delete_user(id: str):
 
         return {"message": "User not found"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         return {"error": str(e)}
-
-@app.put("/users/{id}")
-def update_user(id: str, user: User):
-
-    collection.update_one(
-        {"_id": ObjectId(id)},
-        {
-            "$set": {
-                "name": user.name,
-                "email": user.email,
-                "age": user.age
-            }
-        }
-    )
-
-    updated_user = collection.find_one(
-        {"_id": ObjectId(id)}
-    )
-
-    if updated_user:
-        return serialize_user(updated_user)
-
-    return {"message": "User not found"}

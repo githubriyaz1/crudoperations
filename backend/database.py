@@ -11,3 +11,4 @@ client = MongoClient(MONGO_URL)
 db = client["crud_db"]
 
 collection = db["users"]
+counters_collection = db["counters"]
