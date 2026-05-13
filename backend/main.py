@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from bson import ObjectId
 from pymongo import ReturnDocument
@@ -34,7 +34,6 @@ app.add_middleware(
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "seyadriyaz0@gmail.com").strip().lower()
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 SESSION_SECRET = os.getenv("SESSION_SECRET")
-SESSION_COOKIE_NAME = "crud_admin_session"
 SESSION_MAX_AGE = 60 * 60 * 12
 
 
@@ -126,39 +125,17 @@ def decode_session_token(token: str):
     return payload
 
 
-def request_is_secure(request: Request):
-    forwarded_proto = request.headers.get("x-forwarded-proto")
-    return forwarded_proto == "https" or request.url.scheme == "https"
+def get_request_token(request: Request):
+    authorization = request.headers.get("authorization", "")
 
+    if authorization.lower().startswith("bearer "):
+        return authorization[7:].strip()
 
-def set_admin_cookie(response: Response, request: Request, token: str):
-    secure_cookie = request_is_secure(request)
-
-    response.set_cookie(
-        key=SESSION_COOKIE_NAME,
-        value=token,
-        httponly=True,
-        secure=secure_cookie,
-        samesite="none" if secure_cookie else "lax",
-        max_age=SESSION_MAX_AGE,
-        path="/"
-    )
-
-
-def clear_admin_cookie(response: Response, request: Request):
-    secure_cookie = request_is_secure(request)
-
-    response.delete_cookie(
-        key=SESSION_COOKIE_NAME,
-        httponly=True,
-        secure=secure_cookie,
-        samesite="none" if secure_cookie else "lax",
-        path="/"
-    )
+    return ""
 
 
 def require_admin(request: Request):
-    session = decode_session_token(request.cookies.get(SESSION_COOKIE_NAME, ""))
+    session = decode_session_token(get_request_token(request))
 
     if not session:
         raise HTTPException(status_code=401, detail="Admin access required")
@@ -173,7 +150,7 @@ def home():
 
 @app.get("/admin/session")
 def get_admin_session(request: Request):
-    session = decode_session_token(request.cookies.get(SESSION_COOKIE_NAME, ""))
+    session = decode_session_token(get_request_token(request))
 
     return {
         "authenticated": bool(session),
@@ -182,7 +159,7 @@ def get_admin_session(request: Request):
 
 
 @app.post("/admin/login")
-def admin_login(credentials: AdminLogin, request: Request, response: Response):
+def admin_login(credentials: AdminLogin):
     if not admin_credentials_configured():
         raise HTTPException(status_code=503, detail="Admin credentials are not configured")
 
@@ -190,19 +167,18 @@ def admin_login(credentials: AdminLogin, request: Request, response: Response):
         raise HTTPException(status_code=401, detail="Invalid admin email or password")
 
     token = create_session_token(ADMIN_EMAIL)
-    set_admin_cookie(response, request, token)
     logins = increment_login_count()
 
     return {
         "authenticated": True,
         "email": ADMIN_EMAIL,
-        "logins": logins
+        "logins": logins,
+        "token": token
     }
 
 
 @app.post("/admin/logout")
-def admin_logout(request: Request, response: Response):
-    clear_admin_cookie(response, request)
+def admin_logout():
     return {"authenticated": False}
 
 

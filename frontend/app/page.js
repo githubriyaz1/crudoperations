@@ -15,6 +15,7 @@ import {
 
 const LOCAL_API = "http://localhost:8000";
 const PRODUCTION_API = "https://crudoperations-eh5h.onrender.com";
+const ADMIN_TOKEN_KEY = "crud_admin_token";
 const DEFAULT_STATS = {
   signups: 0,
   logins: 0,
@@ -47,12 +48,34 @@ const loadingLabels = {
   loading: "Loading dashboard...",
 };
 
+const getStoredAdminToken = () => {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.localStorage.getItem(ADMIN_TOKEN_KEY) || "";
+};
+
+const storeAdminToken = (token) => {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
+  }
+};
+
+const clearAdminToken = () => {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(ADMIN_TOKEN_KEY);
+  }
+};
+
 const adminFetch = async (path, options = {}) => {
+  const token = getStoredAdminToken();
+
   return fetch(`${getApiBase()}${path}`, {
     ...options,
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
   });
@@ -117,6 +140,25 @@ export default function Home() {
     setStats(statsData);
   };
 
+  const resetAdminView = (message = "") => {
+    clearAdminToken();
+    setUsers([]);
+    setStats(DEFAULT_STATS);
+    setEditingId(null);
+    setAdminSession({
+      checked: true,
+      authenticated: false,
+      email: "",
+    });
+
+    if (message) {
+      setAdminMessage({
+        type: "error",
+        text: message,
+      });
+    }
+  };
+
   useEffect(() => {
     let isActive = true;
 
@@ -124,6 +166,21 @@ export default function Home() {
       setLoadingAction("loading");
 
       try {
+        if (!getStoredAdminToken()) {
+          if (!isActive) {
+            return;
+          }
+
+          setUsers([]);
+          setStats(DEFAULT_STATS);
+          setAdminSession({
+            checked: true,
+            authenticated: false,
+            email: "",
+          });
+          return;
+        }
+
         const res = await adminFetch("/admin/session", { headers: {} });
         const session = await res.json();
 
@@ -138,6 +195,7 @@ export default function Home() {
             return;
           }
         } else {
+          clearAdminToken();
           setUsers([]);
           setStats(DEFAULT_STATS);
         }
@@ -152,6 +210,7 @@ export default function Home() {
           return;
         }
 
+        clearAdminToken();
         setUsers([]);
         setStats(DEFAULT_STATS);
         setAdminSession({
@@ -242,10 +301,7 @@ export default function Home() {
       });
       await loadProtectedDashboard();
     } catch {
-      setFormMessage({
-        type: "error",
-        text: "Unable to delete user right now.",
-      });
+      resetAdminView("Admin session expired. Please sign in again.");
     } finally {
       setLoadingAction("");
     }
@@ -291,6 +347,11 @@ export default function Home() {
           type: "error",
           text: data.detail || "Unable to update user",
         });
+
+        if (res.status === 401) {
+          resetAdminView("Admin session expired. Please sign in again.");
+        }
+
         return;
       }
 
@@ -306,10 +367,7 @@ export default function Home() {
       });
       await loadProtectedDashboard();
     } catch {
-      setFormMessage({
-        type: "error",
-        text: "Unable to update user right now.",
-      });
+      resetAdminView("Admin session expired. Please sign in again.");
     } finally {
       setLoadingAction("");
     }
@@ -339,6 +397,7 @@ export default function Home() {
         return;
       }
 
+      storeAdminToken(data.token);
       await loadProtectedDashboard();
       setAdminSession({
         checked: true,
@@ -354,9 +413,10 @@ export default function Home() {
         text: "Admin access granted.",
       });
     } catch {
+      clearAdminToken();
       setAdminMessage({
         type: "error",
-        text: "Unable to reach admin login right now.",
+        text: "Admin login completed, but the protected dashboard could not be opened.",
       });
     } finally {
       setLoadingAction("");
@@ -376,6 +436,7 @@ export default function Home() {
         headers: {},
       });
     } finally {
+      clearAdminToken();
       setUsers([]);
       setStats(DEFAULT_STATS);
       setEditingId(null);
