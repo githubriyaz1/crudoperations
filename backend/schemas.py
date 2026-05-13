@@ -4,3 +4,8 @@ class User(BaseModel):
     name: str
     email: str
     age: int
+
+
+class AdminLogin(BaseModel):
+    email: str
+    password: str
