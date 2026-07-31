@@ -18,4 +18,4 @@ services:
       - key: JWT_REFRESH_SECRET
         value: love2bazzar_jwt_refresh_secret_super_secure_key_2026
       - key: CORS_ORIGIN
-        value: https://crudoperations-ivej.vercel.app
+        value: https://love2bazzar.vercel.app,https://crudoperations-ivej.vercel.app,http://localhost:5173

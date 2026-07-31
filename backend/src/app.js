@@ -17,15 +17,36 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-app.use(helmet());
 app.use(
-  cors({
-    origin: env.CORS_ORIGIN,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginOpenerPolicy: false,
   })
 );
+
+const allowedOrigins = [
+  ...env.CORS_ORIGIN,
+  "https://love2bazzar.vercel.app",
+  "https://crudoperations-ivej.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
+
 app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));
