@@ -1,5 +1,26 @@
-venv/
-__pycache__/
-.env
+# Dependencies
 node_modules/
+.venv/
+venv/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Build Outputs
+dist/
+build/
 .next/
+out/
+
+# Logs & Temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.audit_frontend_zip/
+FRONTEND_AUDIT_REPORT.md
