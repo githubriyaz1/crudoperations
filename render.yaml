@@ -19,3 +19,7 @@ services:
         value: love2bazzar_jwt_refresh_secret_super_secure_key_2026
       - key: CORS_ORIGIN
         value: https://love2bazzar.vercel.app,https://crudoperations-ivej.vercel.app,http://localhost:5173
+      - key: ADMIN_EMAIL
+        value: nellaiestates26@gmail.com
+      - key: ADMIN_PASSWORD
+        value: Love008322

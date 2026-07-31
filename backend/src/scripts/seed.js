@@ -15,7 +15,7 @@ export async function runAutoSeed() {
     if (!existingSettings) {
       await StoreSettings.create({
         storeName: "Love2Bazzar",
-        email: "support@love2bazzar.com",
+        email: "nellaiestates26@gmail.com",
         phone: "+91 98765 43210",
         address: "Jaipur Jewellery Market, Rajasthan, India",
         announcementText: "Flat 10% OFF on First Order | Code: WELCOME10",
@@ -25,15 +25,19 @@ export async function runAutoSeed() {
         primaryColor: "#d4af37",
       });
       logger.info("Default Store Settings seeded.");
+    } else if (existingSettings.email !== "nellaiestates26@gmail.com") {
+      existingSettings.email = "nellaiestates26@gmail.com";
+      await existingSettings.save();
     }
 
-    // 2. Seed Admin User
-    const email = env.ADMIN_EMAIL?.trim().toLowerCase() || "love2bazzar@gmail.com";
+    // 2. Seed / Update Admin User
+    const email = env.ADMIN_EMAIL?.trim().toLowerCase() || "nellaiestates26@gmail.com";
     const password = env.ADMIN_PASSWORD || "Love008322";
 
-    const existingAdmin = await User.findOne({ email });
+    const passwordHash = await User.hashPassword(password);
+    const existingAdmin = await User.findOne({ $or: [{ email }, { role: USER_ROLES.ADMIN }] });
+    
     if (!existingAdmin) {
-      const passwordHash = await User.hashPassword(password);
       await User.create({
         name: "Love2Bazzar Admin",
         email,
@@ -44,6 +48,13 @@ export async function runAutoSeed() {
         joinedAt: new Date(),
       });
       logger.info(`Admin user created: ${email}`);
+    } else {
+      existingAdmin.email = email;
+      existingAdmin.role = USER_ROLES.ADMIN;
+      existingAdmin.status = USER_STATUSES.ACTIVE;
+      existingAdmin.passwordHash = passwordHash;
+      await existingAdmin.save();
+      logger.info(`Admin user updated to: ${email}`);
     }
 
     // 3. Seed Default Categories if empty

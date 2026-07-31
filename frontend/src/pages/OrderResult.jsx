@@ -62,7 +62,7 @@ function OrderResult({ success = true }) {
                 </p>
                 <ul className="list-disc pl-5 grid gap-1">
                   <li><strong>Admin Portal:</strong> Registered in live Admin Dashboard (`/admin/orders`).</li>
-                  <li><strong>Email Notification:</strong> Dispatched to Store Owner Gmail (`love2bazzar@gmail.com`).</li>
+                  <li><strong>Email Notification:</strong> Dispatched to Store Owner Gmail (`nellaiestates26@gmail.com`).</li>
                   <li><strong>WhatsApp Direct:</strong> Use button below to notify store owner on WhatsApp instantly.</li>
                 </ul>
               </div>
