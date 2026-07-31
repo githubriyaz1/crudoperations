@@ -1,24 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { FaTruck, FaMoneyBillWave } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useOrders } from "../context/OrdersContext";
 import { useCoupons } from "../context/CouponContext";
 import { showToast } from "../utils/toast";
-
-const paymentOptions = [
-  "Razorpay",
-  "UPI",
-  "Debit Card",
-  "Credit Card",
-  "Net Banking",
-  "Wallet",
-  "Google Pay",
-  "PhonePe",
-  "Paytm",
-  "UPI QR",
-];
 
 function Checkout() {
   const { cartItems, subtotal, shipping, total, clearCart } = useCart();
@@ -29,6 +16,8 @@ function Checkout() {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponMessage, setCouponMessage] = useState("");
+  const [placing, setPlacing] = useState(false);
+
   const gst = Math.round(subtotal * 0.03);
   const couponResult = appliedCoupon ? validateCoupon(appliedCoupon.code, subtotal) : null;
   const couponDiscount = couponResult?.valid ? couponResult.discount : 0;
@@ -46,7 +35,7 @@ function Checkout() {
     setCouponMessage(`Coupon applied — you saved Rs. ${result.discount.toLocaleString("en-IN")}.`);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (appliedCoupon && !couponResult?.valid) {
       setAppliedCoupon(null);
@@ -59,25 +48,35 @@ function Checkout() {
     const email = form.get("email");
     const phone = form.get("phone");
     const address = `${form.get("address")}, ${form.get("city")}, ${form.get("state")} ${form.get("pincode")}`;
-    const order = createOrder({
-      customer,
-      email,
-      phone,
-      address,
-      payment: form.get("payment"),
-      total: payable,
-      coupon: appliedCoupon
-        ? { code: appliedCoupon.code, discount: couponDiscount }
-        : null,
-      items: cartItems.map((item) => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-    });
-    if (appliedCoupon) redeemCoupon(appliedCoupon.id);
-    clearCart();
-    navigate("/order-success", { state: { order } });
+
+    setPlacing(true);
+    try {
+      const order = await createOrder({
+        customer,
+        email,
+        phone,
+        address,
+        payment: "Pay on Delivery",
+        paymentMethod: "Pay on Delivery",
+        total: payable,
+        coupon: appliedCoupon
+          ? { code: appliedCoupon.code, discount: couponDiscount }
+          : null,
+        items: cartItems.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      });
+
+      if (appliedCoupon) redeemCoupon(appliedCoupon.id);
+      clearCart();
+      navigate("/order-success", { state: { order } });
+    } catch {
+      showToast("Failed to place order. Please check details.");
+    } finally {
+      setPlacing(false);
+    }
   };
 
   if (cartItems.length === 0) {
@@ -99,7 +98,7 @@ function Checkout() {
         <div className="section-title">
           <p className="eyebrow">Checkout</p>
           <h1>Complete Your Order</h1>
-          <p>Enter delivery details and choose a payment method.</p>
+          <p>Enter delivery details and confirm your order.</p>
           <div className="gold-divider" />
         </div>
 
@@ -126,15 +125,16 @@ function Checkout() {
 
             <div>
               <h3 className="font-display mb-3 text-2xl font-bold">Payment Method</h3>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {paymentOptions.map((option, index) => (
-                  <label
-                    key={option}
-                    className="flex items-center gap-3 rounded-lg border border-[#eadfbe] bg-[#fffdf8] p-4 font-semibold transition hover:border-[#d4af37]"
-                  >
-                    <input type="radio" name="payment" value={option} defaultChecked={index === 0} /> {option}
-                  </label>
-                ))}
+              <div className="rounded-xl border-2 border-[#d4af37] bg-[#fdf9ee] p-5">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-[#d4af37] text-white">
+                    <FaMoneyBillWave className="text-xl" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg text-[#3d2f08]">Pay on Delivery (Cash on Delivery)</h4>
+                    <p className="text-xs text-[#746c60]">Pay cash or UPI to the delivery executive upon order arrival.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -201,14 +201,15 @@ function Checkout() {
             </div>
             <div className="mt-5 grid gap-2 text-[#746c60]">
               <Row label="Subtotal" value={subtotal} />
-              <Row label="GST" value={gst} />
+              <Row label="GST (3%)" value={gst} />
               <Row label="Shipping" value={shipping} free={shipping === 0} />
               {couponDiscount > 0 && <Row label={`Coupon (${appliedCoupon.code})`} value={couponDiscount} negative />}
             </div>
             <div className="my-5 border-t border-[#eadfbe]" />
             <Row label="Total" value={payable} strong />
-            <button className="btn btn-gold mt-6 w-full" type="submit">
-              Place Order & Pay Online
+            <button className="btn btn-gold mt-6 w-full" type="submit" disabled={placing}>
+              <FaTruck className="inline mr-2" />
+              {placing ? "Placing Order..." : "Place Order (Pay on Delivery)"}
             </button>
           </aside>
         </form>
