@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: love2bazzar-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/v1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        value: mongodb+srv://seyadriyaz0_db_user:xWNWO9e5hjnHFOfw@cluster0.gzwcqlh.mongodb.net/love2bazzar?retryWrites=true&w=majority
+      - key: JWT_ACCESS_SECRET
+        value: love2bazzar_jwt_access_secret_super_secure_key_2026
+      - key: JWT_REFRESH_SECRET
+        value: love2bazzar_jwt_refresh_secret_super_secure_key_2026
+      - key: CORS_ORIGIN
+        value: https://crudoperations-ivej.vercel.app
