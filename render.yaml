@@ -12,7 +12,7 @@ services:
       - key: PORT
         value: 5000
       - key: MONGODB_URI
-        value: mongodb+srv://seyadriyaz0_db_user:xWNWO9e5hjnHFOfw@cluster0.gzwcqlh.mongodb.net/love2bazzar?retryWrites=true&w=majority
+        value: mongodb+srv://seyadriyaz0_db_user:luQo7jZsHEIqaYaI@cluster0.imddtsd.mongodb.net/love2bazzar?retryWrites=true&w=majority&appName=Cluster0
       - key: JWT_ACCESS_SECRET
         value: love2bazzar_jwt_access_secret_super_secure_key_2026
       - key: JWT_REFRESH_SECRET

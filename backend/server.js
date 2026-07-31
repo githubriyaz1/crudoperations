@@ -2,6 +2,7 @@ import http from "node:http";
 import app from "./src/app.js";
 import { connectMongoDB } from "./src/config/database.js";
 import { env } from "./src/config/env.js";
+import { runAutoSeed } from "./src/scripts/seed.js";
 import { logger } from "./src/utils/logger.js";
 
 const server = http.createServer(app);
@@ -9,8 +10,9 @@ const server = http.createServer(app);
 async function startServer() {
   try {
     await connectMongoDB();
+    await runAutoSeed();
   } catch (err) {
-    logger.warn(`Server starting without database connection: ${err.message}`);
+    logger.warn(`Server starting with partial/fallback configuration: ${err.message}`);
   }
 
   server.listen(env.PORT, () => {
