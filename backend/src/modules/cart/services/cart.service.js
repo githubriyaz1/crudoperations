@@ -3,16 +3,32 @@ import { Cart } from "../../../models/Cart.model.js";
 import { Product } from "../../../models/Product.model.js";
 import { ApiError } from "../../../utils/apiError.js";
 
+async function findProduct(productId) {
+  if (!productId) return null;
+  const strId = String(productId).trim();
+
+  let product = null;
+  if (mongoose.Types.ObjectId.isValid(strId) && strId.length === 24) {
+    product = await Product.findById(strId);
+  }
+  if (!product && !isNaN(Number(strId))) {
+    product = await Product.findOne({ legacyId: Number(strId) });
+  }
+  if (!product) {
+    product = await Product.findOne({ slug: strId.toLowerCase() });
+  }
+  return product;
+}
+
 function getCartQuery(userId, sessionId) {
   if (userId) return { user: userId };
   if (sessionId) return { sessionId };
-  return null;
+  return { sessionId: "guest-session" };
 }
 
 export const CartService = {
   async getCart(userId, sessionId) {
     const query = getCartQuery(userId, sessionId);
-    if (!query) return { items: [], subtotal: 0, shipping: 0, total: 0 };
 
     let cart = await Cart.findOne(query).populate("items.product");
     if (!cart) {
@@ -56,27 +72,19 @@ export const CartService = {
   },
 
   async addItem(userId, sessionId, { productId, quantity = 1, bundleMetadata = null }) {
-    let product = null;
-    if (mongoose.Types.ObjectId.isValid(productId)) {
-      product = await Product.findById(productId);
-    } else {
-      product = await Product.findOne({ slug: productId.toString().toLowerCase() });
-    }
-
+    const product = await findProduct(productId);
     if (!product) {
       throw new ApiError(404, "Product not found.");
     }
 
     const query = getCartQuery(userId, sessionId);
-    if (!query) throw new ApiError(400, "User ID or Session ID is required.");
-
     let cart = await Cart.findOne(query);
     if (!cart) {
       cart = await Cart.create({ ...query, items: [] });
     }
 
     const existingIndex = cart.items.findIndex(
-      (item) => item.product.toString() === product._id.toString()
+      (item) => item.product && item.product.toString() === product._id.toString()
     );
 
     if (existingIndex > -1) {
@@ -98,22 +106,15 @@ export const CartService = {
 
   async updateItemQuantity(userId, sessionId, productId, quantity) {
     const query = getCartQuery(userId, sessionId);
-    if (!query) throw new ApiError(400, "User ID or Session ID is required.");
-
     const cart = await Cart.findOne(query);
     if (!cart) throw new ApiError(404, "Cart not found.");
 
-    let product = null;
-    if (mongoose.Types.ObjectId.isValid(productId)) {
-      product = await Product.findById(productId);
-    } else {
-      product = await Product.findOne({ slug: productId.toString().toLowerCase() });
-    }
+    const product = await findProduct(productId);
 
     const item = cart.items.find(
       (i) =>
-        i._id.toString() === productId ||
-        (product && i.product.toString() === product._id.toString())
+        i._id.toString() === String(productId) ||
+        (product && i.product && i.product.toString() === product._id.toString())
     );
 
     if (!item) {
@@ -133,21 +134,14 @@ export const CartService = {
 
   async removeItem(userId, sessionId, productId) {
     const query = getCartQuery(userId, sessionId);
-    if (!query) throw new ApiError(400, "User ID or Session ID is required.");
-
     const cart = await Cart.findOne(query);
     if (cart) {
-      let product = null;
-      if (mongoose.Types.ObjectId.isValid(productId)) {
-        product = await Product.findById(productId);
-      } else {
-        product = await Product.findOne({ slug: productId.toString().toLowerCase() });
-      }
+      const product = await findProduct(productId);
 
       cart.items = cart.items.filter(
         (i) =>
-          i._id.toString() !== productId &&
-          (!product || i.product.toString() !== product._id.toString())
+          i._id.toString() !== String(productId) &&
+          (!product || (i.product && i.product.toString() !== product._id.toString()))
       );
       await cart.save();
     }

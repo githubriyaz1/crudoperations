@@ -9,7 +9,6 @@ function Login() {
   const { login, currentUser } = useAuth();
   const [form, setForm] = useState({ email: "", password: "", remember: true });
   const [error, setError] = useState("");
-
   const [submitting, setSubmitting] = useState(false);
 
   if (currentUser?.role === "admin") {
@@ -26,9 +25,14 @@ function Login() {
         setError(result.message);
         return;
       }
-      navigate(result.user.role === "admin" ? "/admin" : location.state?.from || "/profile", {
-        replace: true,
-      });
+      const targetPath =
+        result.user?.role === "admin"
+          ? "/admin"
+          : typeof location.state?.from === "string"
+          ? location.state.from
+          : location.state?.from?.pathname || "/profile";
+
+      navigate(targetPath, { replace: true });
     } finally {
       setSubmitting(false);
     }
