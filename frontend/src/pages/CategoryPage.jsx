@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import { useProducts } from "../context/ProductContext";
 
@@ -31,6 +32,14 @@ const labels = {
     title: "Bracelets",
     subtitle: "Elegant wristwear with a polished jewellery finish.",
   },
+  bangles: {
+    title: "Bangles",
+    subtitle: "Traditional and modern handcrafted bangles.",
+  },
+  necklaces: {
+    title: "Necklaces",
+    subtitle: "Stunning statement necklaces and daily wear chains.",
+  },
   giftbox: {
     title: "Build Your Own Gift Box",
     subtitle: "Choose premium pieces and create a memorable gift.",
@@ -49,25 +58,35 @@ const labels = {
   },
 };
 
-function CategoryPage({ category = "all" }) {
+function CategoryPage({ category: categoryProp }) {
+  const params = useParams();
+  const activeCategory = (categoryProp || params.categorySlug || params.slug || "all").toLowerCase();
   const [sort, setSort] = useState("featured");
   const { visibleProducts } = useProducts();
-  const page = labels[category] || labels.all;
+
+  const page = labels[activeCategory] || {
+    title: activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1),
+    subtitle: `Explore our handpicked collection of ${activeCategory}.`,
+  };
 
   const filteredProducts = useMemo(() => {
     let result = [...visibleProducts];
-    if (category && !["all", "newarrivals", "gifts", "bestsellers"].includes(category)) {
-      result = result.filter((product) => product.category === category);
+    if (activeCategory && !["all", "newarrivals", "gifts", "bestsellers"].includes(activeCategory)) {
+      result = result.filter(
+        (product) =>
+          product.category?.toLowerCase() === activeCategory ||
+          product.categorySlug?.toLowerCase() === activeCategory
+      );
     }
-    if (category === "bestsellers") {
+    if (activeCategory === "bestsellers") {
       result = result.filter((product) => product.featured || product.badge === "Best Seller");
     }
-    if (category === "gifts") {
+    if (activeCategory === "gifts") {
       result = result.filter((product) =>
         ["giftbox", "combos", "earrings", "studs"].includes(product.category)
       );
     }
-    if (category === "newarrivals") {
+    if (activeCategory === "newarrivals") {
       result = result
         .slice()
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -82,7 +101,7 @@ function CategoryPage({ category = "all" }) {
       result.sort((a, b) => b.rating - a.rating);
     }
     return result;
-  }, [category, sort, visibleProducts]);
+  }, [activeCategory, sort, visibleProducts]);
 
   return (
     <main className="page-shell">
@@ -119,8 +138,8 @@ function CategoryPage({ category = "all" }) {
           </div>
         ) : (
           <div className="soft-card p-10 text-center">
-            <h2 className="font-display text-3xl font-bold">No products found</h2>
-            <p className="mt-2 text-[#746c60]">Try another category.</p>
+            <h2 className="font-display text-3xl font-bold">No products found in {page.title}</h2>
+            <p className="mt-2 text-[#746c60]">Try another category or browse all items.</p>
           </div>
         )}
       </div>

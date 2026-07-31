@@ -48,79 +48,82 @@ function App() {
             <OrdersProvider>
               <CartProvider>
                 <WishlistProvider>
-              <BrowserRouter>
-                <Navbar />
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/shopall" element={<ShopAll />} />
-                  <Route path="/product/:id" element={<ProductDetails />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route
-                    path="/checkout"
-                    element={
-                      <ProtectedRoute>
-                        <Checkout />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="/wishlist" element={<Wishlist />} />
-                  <Route path="/studs" element={<CategoryPage category="studs" />} />
-                  <Route path="/earrings" element={<CategoryPage category="earrings" />} />
-                  <Route path="/rings" element={<CategoryPage category="rings" />} />
-                  <Route path="/chains" element={<CategoryPage category="chains" />} />
-                  <Route path="/bracelets" element={<CategoryPage category="bracelets" />} />
-                  <Route path="/combos" element={<CategoryPage category="combos" />} />
-                  <Route path="/gifts" element={<CategoryPage category="gifts" />} />
-                  <Route path="/bestsellers" element={<CategoryPage category="bestsellers" />} />
-                  <Route path="/newarrivals" element={<CategoryPage category="newarrivals" />} />
-                  <Route path="/giftbox" element={<GiftBox />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/orders"
-                    element={
-                      <ProtectedRoute>
-                        <OrderHistory />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/order-success" element={<OrderResult success />} />
-                  <Route path="/order-failed" element={<OrderResult success={false} />} />
-                  <Route
-                    path="/admin"
-                    element={
-                      <ProtectedRoute adminOnly>
-                        <AdminLayout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<AdminOverview />} />
-                    <Route path="products" element={<ProductsAdmin />} />
-                    <Route path="categories" element={<CategoriesAdmin />} />
-                    <Route path="orders" element={<OrdersAdmin />} />
-                    <Route path="customers" element={<CustomersAdmin />} />
-                    <Route path="reviews" element={<ReviewsAdmin />} />
-                    <Route path="coupons" element={<CouponsAdmin />} />
-                    <Route path="analytics" element={<AnalyticsAdmin />} />
-                    <Route path="settings" element={<SettingsAdmin />} />
-                  </Route>
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <Footer />
-                <Toast />
-              </BrowserRouter>
+                  <BrowserRouter>
+                    <Navbar />
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/shopall" element={<ShopAll />} />
+                      <Route path="/product/:id" element={<ProductDetails />} />
+                      <Route path="/cart" element={<Cart />} />
+                      <Route
+                        path="/checkout"
+                        element={
+                          <ProtectedRoute>
+                            <Checkout />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/search" element={<Search />} />
+                      <Route path="/wishlist" element={<Wishlist />} />
+                      <Route path="/studs" element={<CategoryPage category="studs" />} />
+                      <Route path="/earrings" element={<CategoryPage category="earrings" />} />
+                      <Route path="/rings" element={<CategoryPage category="rings" />} />
+                      <Route path="/chains" element={<CategoryPage category="chains" />} />
+                      <Route path="/bracelets" element={<CategoryPage category="bracelets" />} />
+                      <Route path="/bangles" element={<CategoryPage category="bangles" />} />
+                      <Route path="/necklaces" element={<CategoryPage category="necklaces" />} />
+                      <Route path="/combos" element={<CategoryPage category="combos" />} />
+                      <Route path="/gifts" element={<CategoryPage category="gifts" />} />
+                      <Route path="/bestsellers" element={<CategoryPage category="bestsellers" />} />
+                      <Route path="/newarrivals" element={<CategoryPage category="newarrivals" />} />
+                      <Route path="/category/:categorySlug" element={<CategoryPage />} />
+                      <Route path="/giftbox" element={<GiftBox />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/signup" element={<Signup />} />
+                      <Route
+                        path="/profile"
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/orders"
+                        element={
+                          <ProtectedRoute>
+                            <OrderHistory />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/order-success" element={<OrderResult success />} />
+                      <Route path="/order-failed" element={<OrderResult success={false} />} />
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute adminOnly>
+                            <AdminLayout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        <Route index element={<AdminOverview />} />
+                        <Route path="products" element={<ProductsAdmin />} />
+                        <Route path="categories" element={<CategoriesAdmin />} />
+                        <Route path="orders" element={<OrdersAdmin />} />
+                        <Route path="customers" element={<CustomersAdmin />} />
+                        <Route path="reviews" element={<ReviewsAdmin />} />
+                        <Route path="coupons" element={<CouponsAdmin />} />
+                        <Route path="analytics" element={<AnalyticsAdmin />} />
+                        <Route path="settings" element={<SettingsAdmin />} />
+                      </Route>
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                    <Footer />
+                    <Toast />
+                  </BrowserRouter>
                 </WishlistProvider>
               </CartProvider>
             </OrdersProvider>
